@@ -365,10 +365,10 @@ class TrainingPageMixin:
                 games = st.slider(
                     "How many practice games?",
                     100,
-                    min(5000, self.config.max_training_games),
+                    min(50000, self.config.max_training_games),
                     min(
                         self.config.default_training_games,
-                        min(5000, self.config.max_training_games),
+                        min(50000, self.config.max_training_games),
                     ),
                     100,
                 )

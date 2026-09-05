@@ -161,7 +161,7 @@ class TrainingDefaults:
 
     default_games: int = 1000
     app_training_games: int = 1000
-    max_app_training_games: int = 10000
+    max_app_training_games: int = 50000
     simple_mode_max_training_games: int = 5000
 
     evaluation_games: int = 1000
@@ -169,10 +169,10 @@ class TrainingDefaults:
     comparison_evaluation_games: int = 1000
     app_comparison_training_games: int = 200
     app_comparison_evaluation_games: int = 20
-    max_app_comparison_evaluation_games: int = 500
+    max_app_comparison_evaluation_games: int = 1000
 
     repeated_experiment_runs: int = 3
-    max_app_repetitions: int = 5
+    max_app_repetitions: int = 100
     log_interval: int = 1
 
     def validate(self) -> None:

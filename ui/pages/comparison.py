@@ -139,10 +139,10 @@ class ComparisonPageMixin:
                 trained_games = st.slider(
                     "Practice games before the test",
                     100,
-                    min(5000, self.config.max_training_games),
+                    min(10000, self.config.max_training_games),
                     min(
                         self.config.default_comparison_training_games,
-                        min(5000, self.config.max_training_games),
+                        min(10000, self.config.max_training_games),
                     ),
                     100,
                     key="comparison_training_games",
@@ -154,10 +154,10 @@ class ComparisonPageMixin:
                 evaluation_games = st.slider(
                     "Games against each opponent",
                     10,
-                    min(200, self.config.max_comparison_evaluation_games),
+                    min(1000, self.config.max_comparison_evaluation_games),
                     min(
                         self.config.default_comparison_evaluation_games,
-                        min(200, self.config.max_comparison_evaluation_games),
+                        min(1000, self.config.max_comparison_evaluation_games),
                     ),
                     10,
                     key="comparison_evaluation_games",
@@ -170,7 +170,7 @@ class ComparisonPageMixin:
                 repetitions = st.slider(
                     "Repeat the whole test",
                     1,
-                    min(3, self.config.max_comparison_repetitions),
+                    min(100, self.config.max_comparison_repetitions),
                     1,
                     1,
                     key="comparison_repetitions",
