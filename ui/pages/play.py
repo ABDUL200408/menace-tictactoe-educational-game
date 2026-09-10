@@ -1306,6 +1306,18 @@ class PlayPageMixin:
             result=result,
             before_after_rows=after_rows,
         )
+
+        # Human play changes MENACE's bead memory too. Save immediately at the
+        # end of each completed game so "Continue previous learning" remains
+        # available after the browser tab is closed and reopened.
+        try:
+            self._save_learning_bundle(show_message=False)
+        except Exception as exc:
+            st.session_state[SessionKey.PERSISTENCE_NOTICE] = (
+                "MENACE learned from this game, but the saved learning journey "
+                f"could not be updated: {exc}"
+            )
+
         self._notify(message, icon="🏁")
 
     def _extract_last_matchbox_state(self) -> Optional[str]:

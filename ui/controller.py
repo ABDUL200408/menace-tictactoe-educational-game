@@ -9,6 +9,7 @@ import threading
 import uuid
 
 import streamlit as st
+import streamlit.components.v1 as components
 
 from src.visualisation import VisualisationConfig, Visualiser
 from ui.app_config import AppConfig
@@ -102,6 +103,38 @@ class MENACEStreamlitApp(
         if token is None:
             return None
         return hashlib.sha256(token).hexdigest()
+
+    def _browser_persistence_cookie(self) -> tuple[str, str] | None:
+        """Return the durable MENACE identity stored in this browser, if valid."""
+        try:
+            raw = str(st.context.cookies.get("menace_identity", "") or "").strip()
+        except Exception:
+            return None
+        if "|" not in raw:
+            return None
+        session_id, participant_label = raw.split("|", 1)
+        session_id = session_id.strip().lower()
+        participant_label = participant_label.strip().lower()
+        if not self._valid_persistence_identity(session_id, participant_label):
+            return None
+        return session_id, participant_label
+
+    @staticmethod
+    def _write_browser_persistence_cookie(
+        session_id: str,
+        participant_label: str,
+    ) -> None:
+        """Persist the participant identity in a first-party browser cookie."""
+        value = f"{session_id}|{participant_label}"
+        script_value = json.dumps(value)
+        components.html(
+            "<script>"
+            f"document.cookie = 'menace_identity=' + {script_value} "
+            "+ '; Path=/; Max-Age=31536000; SameSite=Lax';"
+            "</script>",
+            height=0,
+            width=0,
+        )
 
     def _participant_registry_path(self):
         """Return the shared browser-to-participant registry path."""
@@ -235,11 +268,10 @@ class MENACEStreamlitApp(
     def _scope_persistence_to_browser(self) -> None:
         """Give each browser profile its own stable persistence identity.
 
-        Separate browsers receive separate ``user_xx_xxxx`` labels. The same
-        browser can reconnect after a Streamlit restart because a hashed browser
-        cookie key is mapped to its participant identity in a small server-side
-        registry. Continue/reset actions therefore remain scoped to that browser's
-        own saved learning journey.
+        Recovery prefers the dedicated MENACE browser cookie, then a valid
+        personalised URL, then the server-side XSRF registry. This avoids
+        losing a learner journey when Streamlit rotates its own XSRF cookie
+        after a reconnect or server restart.
         """
         session_id = st.session_state.get(SessionKey.PERSISTENCE_ID)
         participant_label = st.session_state.get(SessionKey.PERSISTENCE_LABEL)
@@ -251,61 +283,36 @@ class MENACEStreamlitApp(
             candidate_label = str(
                 st.query_params.get("menace_user", "")
             ).strip().lower()
+            cookie_identity = self._browser_persistence_cookie()
             browser_key = self._browser_identity_key()
 
             with _PARTICIPANT_LOCK:
                 registry = self._load_participant_registry()
                 registered = registry.get(browser_key) if browser_key else None
 
-                if registered is not None:
-                    # The browser already owns a participant identity. This also
-                    # prevents a shared personalised URL from switching it to
-                    # another participant's saved journey.
-                    session_id = registered["session_id"]
-                    participant_label = registered["participant_label"]
-                elif (
-                    browser_key
-                    and self._valid_persistence_identity(
-                        candidate_id,
-                        candidate_label,
-                    )
-                    and not self._identity_owned_by_other_browser(
-                        registry,
-                        browser_key,
-                        candidate_id,
-                        candidate_label,
-                    )
-                ):
-                    # Preserve an existing personalised URL for this browser and
-                    # register it so future base-URL visits can recover it.
-                    session_id, participant_label = candidate_id, candidate_label
-                    registry[browser_key] = {
-                        "session_id": session_id,
-                        "participant_label": participant_label,
-                    }
-                    self._save_participant_registry(registry)
-                elif browser_key:
-                    # A genuinely new browser/profile always receives a new
-                    # participant, even when other users already have saved data.
-                    session_id, participant_label = self._new_persistence_identity(
-                        registry
-                    )
-                    registry[browser_key] = {
-                        "session_id": session_id,
-                        "participant_label": participant_label,
-                    }
-                    self._save_participant_registry(registry)
+                if cookie_identity is not None:
+                    session_id, participant_label = cookie_identity
                 elif self._valid_persistence_identity(
                     candidate_id,
                     candidate_label,
                 ):
-                    # Fallback for environments where browser cookies are not
-                    # exposed: a valid personalised URL still survives reruns.
+                    # The personalised URL is a recovery token for the same
+                    # learner journey, including after Streamlit rotates XSRF.
                     session_id, participant_label = candidate_id, candidate_label
+                elif registered is not None:
+                    session_id = registered["session_id"]
+                    participant_label = registered["participant_label"]
                 else:
                     session_id, participant_label = self._new_persistence_identity(
                         registry
                     )
+
+                if browser_key:
+                    registry[browser_key] = {
+                        "session_id": session_id,
+                        "participant_label": participant_label,
+                    }
+                    self._save_participant_registry(registry)
 
             st.session_state[SessionKey.PERSISTENCE_ID] = session_id
             st.session_state[SessionKey.PERSISTENCE_LABEL] = participant_label
@@ -313,6 +320,10 @@ class MENACEStreamlitApp(
         st.query_params["menace_session"] = str(session_id)
         st.query_params["menace_user"] = str(participant_label)
         st.query_params["menace_run"] = _SERVER_RUN_ID
+        self._write_browser_persistence_cookie(
+            str(session_id),
+            str(participant_label),
+        )
 
         self.config = self.config.with_isolated_paths(str(participant_label))
         self._build_visualiser()
