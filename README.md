@@ -36,8 +36,8 @@ evaluation, reporting, and demonstration.
 -   MENACE matchboxes with weighted bead-based probabilistic move
     selection.
 -   Reinforcement after completed games:
-    -   win reward: **+3 beads**;
-    -   draw reward: **+1 bead**;
+    -   win reward: **+3 beads**.
+    -   draw reward: **+1 bead**.
     -   loss penalty: **−1 bead**, while preserving a minimum legal move
         weight.
 -   Decision history so reinforcement is applied to the moves MENACE
@@ -138,54 +138,147 @@ menace_tictactoe_project/
 │   ├── readability_results.csv
 │   └── figures/
 ├── saved_models/
-│   └── menace_model.json
+│   └── sessions/
 └── docs/
     └── screenshots/
 ```
-
-Generated folders such as `.venv/`, `__pycache__/`, `.pytest_cache/`,
-compiled Python files, and runtime backup files should not be committed
-to the repository.
 
 ------------------------------------------------------------------------
 
 ## Architecture
 
-The project separates the learner interface from the game and learning
-logic.
+The project separates the core game and learning logic from the
+Streamlit learner interface, persistence, evidence generation, and
+automated testing.
+
+### Root files
+
+-   **`app.py`** --- main Streamlit entry point used to start the
+    learner-facing application.
+-   **`main.py`** --- command-line entry point for technical experiment
+    and project utility operations.
+-   **`requirements.txt`** --- lists the Python dependencies required by
+    the project.
+-   **`pytest.ini`** --- contains pytest configuration for the automated
+    test suite.
+-   **`README.md`** --- documents the project, installation,
+    architecture, use, and testing.
+-   **`.streamlit/config.toml`** --- contains Streamlit application
+    configuration.
 
 ### Core logic (`src/`)
 
--   **`board.py`** --- board representation, legal moves, win/draw
+-   **`src/board.py`** --- board representation, legal moves, win/draw
     detection, symmetry transformations, and canonicalisation.
--   **`game.py`** --- controls complete games, turns, move history, and
+-   **`src/config.py`** --- central project paths, MENACE settings,
+    training/evaluation defaults, visualisation defaults, and
+    application configuration.
+-   **`src/game.py`** --- complete game flow, turns, move records, board
+    updates, and game results.
+-   **`src/menace.py`** --- MENACE matchboxes, bead weights, weighted
+    move selection, decision history, reinforcement, symmetry mappings,
+    and model serialisation.
+-   **`src/persistence.py`** --- saving and loading MENACE models and
+    experiment data using JSON and CSV.
+-   **`src/players.py`** --- Human, Random, FirstAvailable, Scripted,
+    Heuristic, and Minimax player behaviours.
+-   **`src/readability.py`** --- reproducible readability calculations
+    for learner-facing text.
+-   **`src/statistics.py`** --- win/loss/draw summaries, rolling
+    statistics, early-versus-late analysis, and opponent comparisons.
+-   **`src/trainer.py`** --- repeated MENACE training, evaluation
+    without learning, and comparative experiments.
+-   **`src/visualisation.py`** --- Plotly figures, matchbox/bead
+    visualisations, and evidence export.
+
+### Streamlit interface (`ui/`)
+
+-   **`ui/__init__.py`** --- identifies the UI directory as a Python
+    package.
+-   **`ui/app_config.py`** --- adapts central project configuration for
+    the Streamlit interface.
+-   **`ui/common.py`** --- shared interface helpers and reusable UI
+    functionality.
+-   **`ui/controller.py`** --- coordinates application state,
+    user/session identity, page rendering, MENACE state, and
+    application-level interactions.
+-   **`ui/demos.py`** --- interactive educational MENACE demonstration
+    and walkthrough.
+-   **`ui/navigation.py`** --- learner-facing page navigation and
+    related behaviour.
+-   **`ui/persistence_controls.py`** --- controls for continuing saved
+    learning and starting MENACE again from the beginning.
+-   **`ui/session.py`** --- Streamlit session-state keys and
+    session-related state management.
+-   **`ui/assets/styles.css`** --- interface styling for layout, themes,
+    navigation, buttons, focus states, cards, and other visual
+    components.
+
+### Learner-facing pages (`ui/pages/`)
+
+-   **`ui/pages/__init__.py`** --- identifies the pages directory as a
+    Python package.
+-   **`ui/pages/play.py`** --- Human-vs-MENACE gameplay, move history,
+    decision explanations, bead information, reinforcement feedback, and
+    learning persistence after completed games.
+-   **`ui/pages/training.py`** --- repeated MENACE practice against
+    Random and presentation of training outcomes and learning progress.
+-   **`ui/pages/comparison.py`** --- separate-copy MENACE training
+    against Random followed by evaluation, with learning disabled,
+    against Random, Heuristic, and Minimax.
+-   **`ui/pages/results.py`** --- measured training evidence,
+    statistics, charts, exported evidence, and learning results.
+-   **`ui/pages/learning.py`** --- learner-facing explanations and
+    supporting educational content about MENACE learning.
+
+### Tools (`tools/`)
+
+-   **`tools/readability_audit.py`** --- runs the automated readability
+    audit and writes readability evidence.
+
+### Automated tests (`tests/`)
+
+-   **`tests/test_app_helpers.py`** --- shared application/helper
+    behaviour.
+-   **`tests/test_board.py`** --- board rules, legal moves, outcomes,
+    symmetry, and canonicalisation.
+-   **`tests/test_chart_theme_integration.py`** --- chart rendering and
+    theme integration.
+-   **`tests/test_dual_theme.py`** --- light and dark theme behaviour.
+-   **`tests/test_game.py`** --- game flow, turns, move history, and
     results.
--   **`menace.py`** --- MENACE matchboxes, beads, weighted move
-    selection, decision history, reinforcement, and model serialisation.
--   **`players.py`** --- Human, Random, FirstAvailable, Scripted,
-    Heuristic, and Minimax players.
--   **`trainer.py`** --- repeated training, evaluation without learning,
-    and comparative experiments.
--   **`statistics.py`** --- win/loss/draw summaries, rolling statistics,
-    early-versus-late learning analysis, and opponent comparisons.
--   **`visualisation.py`** --- Plotly figures, matchbox/bead
-    visualisations, and report evidence export.
--   **`persistence.py`** --- model and experiment persistence using JSON
-    and CSV.
--   **`readability.py`** --- reproducible readability calculations.
--   **`config.py`** --- central project paths and default configuration.
+-   **`tests/test_main.py`** --- command-line entry-point and
+    experiment-runner behaviour.
+-   **`tests/test_menace.py`** --- MENACE matchboxes, choices,
+    decisions, reinforcement, symmetry, and model behaviour.
+-   **`tests/test_persistence.py`** --- saving, loading, resetting, and
+    persistence behaviour.
+-   **`tests/test_readability.py`** --- readability calculations and
+    requirements.
+-   **`tests/test_statistics.py`** --- statistical summaries and
+    learning-analysis calculations.
+-   **`tests/test_trainer.py`** --- training, evaluation, and comparison
+    workflows.
+-   **`tests/test_ui_regression.py`** --- important interface regression
+    checks.
+-   **`tests/test_ui_requirements.py`** --- specified learner-facing UI
+    requirements.
+-   **`tests/test_visualisation.py`** --- visualisation and
+    evidence-generation behaviour.
 
-### Interface (`ui/`)
+### Generated data and evidence
 
-`app.py` starts the Streamlit application. The `ui` package contains
-navigation, session-state handling, persistence controls, shared
-interface helpers, demonstrations, page renderers, and CSS styling.
-
-### Command-line experiments (`main.py`)
-
-`main.py` provides a reproducible command-line route for training,
-evaluation, comparison, and result-file management without using the
-Streamlit interface.
+-   **`results/`** --- generated training, comparison, readability, and
+    figure evidence.
+-   **`results/figures/`** --- general exported figures where
+    applicable.
+-   **`results/sessions/`** --- runtime user/session-specific generated
+    evidence where applicable.
+-   **`saved_models/`** --- saved MENACE learning models.
+-   **`saved_models/sessions/`** --- runtime user/session-specific
+    MENACE models where applicable.
+-   **`docs/screenshots/`** --- project screenshots and supporting
+    documentation evidence.
 
 ------------------------------------------------------------------------
 
@@ -287,42 +380,6 @@ matchboxes, beads, reinforcement, and future move probabilities.
 
 ------------------------------------------------------------------------
 
-## Reproducible Command-Line Experiments
-
-Show runner information:
-
-``` bash
-python main.py info
-```
-
-Train MENACE against Random:
-
-``` bash
-python main.py train --games 1000 --seed 42
-```
-
-Evaluate a saved MENACE model against Random without learning:
-
-``` bash
-python main.py evaluate --games 1000 --seed 42
-```
-
-Train and compare MENACE against Random, Heuristic, and Minimax:
-
-``` bash
-python main.py compare --trained-games 5000 --evaluation-games 1000 --repetitions 1 --seed 42
-```
-
-Delete generated CLI CSV result files:
-
-``` bash
-python main.py reset-results
-```
-
-Use `python main.py <command> --help` for the available options.
-
-------------------------------------------------------------------------
-
 ## Evidence and Output Files
 
 The project separates **persistent learning state** from **experimental
@@ -420,34 +477,38 @@ prove comprehension or educational effectiveness.
 
 Run the complete automated test suite:
 
-``` bash
+```bash
 pytest
 ```
 
 For verbose output:
 
-``` bash
+```bash
 pytest -v
 ```
 
-The suite contains 14 test files covering:
+The suite contains **14 test files**. Together, they cover the main game logic, MENACE learning behaviour, training and evaluation workflows, persistence, statistics, visualisation, readability, command-line behaviour, interface requirements, regression checks, and theme integration.
 
--   board rules and symmetry;
--   game flow;
--   MENACE learning and reinforcement;
--   training and evaluation;
--   model persistence;
--   statistics;
--   visualisation;
--   command-line experiment behaviour;
--   readability;
--   UI requirements and regression checks;
--   light/dark theme behaviour;
--   chart-theme integration.
+The 14 test files are:
 
-To run an individual file:
+- **`tests/test_app_helpers.py`** — tests shared application and helper behaviour.
+- **`tests/test_board.py`** — tests board rules, legal moves, wins, draws, symmetry transformations, and canonicalisation.
+- **`tests/test_chart_theme_integration.py`** — tests integration between chart rendering and the application theme.
+- **`tests/test_dual_theme.py`** — tests light and dark theme behaviour.
+- **`tests/test_game.py`** — tests game flow, turns, move history, and game results.
+- **`tests/test_main.py`** — tests command-line entry-point and experiment-runner behaviour.
+- **`tests/test_menace.py`** — tests MENACE matchboxes, bead-based move selection, decision history, reinforcement, symmetry handling, and model behaviour.
+- **`tests/test_persistence.py`** — tests saving, loading, resetting, and persistence-related behaviour.
+- **`tests/test_readability.py`** — tests readability calculations and readability requirements.
+- **`tests/test_statistics.py`** — tests statistical summaries, rates, rolling measures, and learning-analysis calculations.
+- **`tests/test_trainer.py`** — tests training, evaluation, and comparison workflows.
+- **`tests/test_ui_regression.py`** — checks important interface behaviour against regressions.
+- **`tests/test_ui_requirements.py`** — verifies specified learner-facing UI requirements.
+- **`tests/test_visualisation.py`** — tests visualisation and evidence-generation behaviour.
 
-``` bash
+To run an individual test file:
+
+```bash
 pytest tests/test_menace.py
 ```
 
@@ -476,18 +537,6 @@ the learning process easier to inspect.
 MENACE is intentionally simple and explainable. It can improve through
 repeated experience but is not expected to match an optimal search
 algorithm such as Minimax in every evaluation.
-
-------------------------------------------------------------------------
-
-## Reproducibility Notes
-
--   Training and command-line experiments support explicit random seeds.
--   Comparison runs record their seed.
--   Evaluation can be run with MENACE learning disabled.
--   JSON preserves the learned model.
--   CSV files preserve experimental evidence for later analysis.
--   Stochastic runs may differ when a different seed is used or when the
-    interface starts a new randomly seeded comparison.
 
 ------------------------------------------------------------------------
 
